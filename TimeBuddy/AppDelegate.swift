@@ -34,11 +34,42 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     
     func addMenuItems() {
         statusItem?.menu?.removeAllItems()
+        
+        let dateFormatter = DateFormatter()
+        dateFormatter.timeStyle = .medium
+        
+        let timezones = UserDefaults.standard.stringArray(forKey: "TimeZones") ?? []
+        
+        for timezone in timezones {
+            guard let zone = TimeZone(identifier: timezone) else { continue }
+            
+            dateFormatter.timeZone = zone
+            
+            let formattedTime = dateFormatter.string(from: .now)
+            
+            statusItem?.menu?.addItem(withTitle: "\(zone.formattedName): \(formattedTime)", action: #selector(copyToClipboard), keyEquivalent: "")
+        }
+        
+        if timezones.isEmpty == false {
+            statusItem?.menu?.addItem(.separator())
+        }
+        
         statusItem?.menu?.addItem(withTitle: "Settings", action: #selector(showSettings), keyEquivalent: "")
+        
+        statusItem?.menu?.addItem(withTitle: "Quit", action: #selector(quit), keyEquivalent: "")
     }
     
     func menuWillOpen(_ menu: NSMenu) {
         addMenuItems()
         popover.performClose(self)
+    }
+    
+    @objc func quit() {
+        NSApp.terminate(self)
+    }
+    
+    @objc func copyToClipboard(_ sender: NSMenuItem) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(sender.title, forType: .string)
     }
 }
